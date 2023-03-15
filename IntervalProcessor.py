@@ -25,21 +25,21 @@ def findInstrumentName(instrument_digit):
 
 # find the integer intervals for the intended instrument when doing intersection
 # intervals were shortened at sides to round to integers
-def intervalsListByNameInter(instrument):
+def intervalsListByNameInter(dataframe, instrument):
     tier = instrument_dic.get(instrument)
-    return [[int(start+1),int(stop)] for start, stop in zip(guojige[guojige.tier==tier]["start"],guojige[guojige.tier==tier]["stop"])]
+    return [[int(start+1),int(stop)] for start, stop in zip(dataframe[dataframe.tier==tier]["start"],dataframe[dataframe.tier==tier]["stop"])]
 
-def intervalsListByDigitInter(digit):
-    return intervalsListByNameInter(findInstrumentName(digit))
+def intervalsListByDigitInter(dataframe,digit):
+    return intervalsListByNameInter(dataframe,findInstrumentName(digit))
 
 # find the integer intervals for the intended instrument when doing difference
 # intervals were elongated at sides to round to integers
-def intervalsListByNameOuter(instrument):
+def intervalsListByNameOuter(dataframe,instrument):
     tier = instrument_dic.get(instrument)
-    return [[int(start),int(stop+1)] for start, stop in zip(guojige[guojige.tier==tier]["start"],guojige[guojige.tier==tier]["stop"])]
+    return [[int(start),int(stop+1)] for start, stop in zip(dataframe[dataframe.tier==tier]["start"],dataframe[dataframe.tier==tier]["stop"])]
 
-def intervalsListByDigitOuter(digit):
-    return intervalsListByNameOuter(findInstrumentName(digit))
+def intervalsListByDigitOuter(dataframe,digit):
+    return intervalsListByNameOuter(dataframe,findInstrumentName(digit))
 
 # Intersection --------------------------------------------------------------------------------------------------------------------------
 
@@ -67,8 +67,8 @@ def findCommonIntervals(ins1, ins2, threshold):
 # Find common intervals of several instruments, result intervals might include other instruments
 # input: a list of raw intervals for each instrument digit
 # output: a list of common intervals for the given instruments
-def findCommonIntervalsForMulti(instrument_list, threshold):
-    interval_list = [intervalsListByDigitInter(ins_digit) for ins_digit in instrument_list]
+def findCommonIntervalsForMulti(dataframe, instrument_list, threshold):
+    interval_list = [intervalsListByDigitInter(dataframe, ins_digit) for ins_digit in instrument_list]
     result = findCommonIntervals(interval_list[0],interval_list[1], threshold)
     i = 2
     while (i < len(instrument_list)):
@@ -115,9 +115,9 @@ def excludeCommonIntervals(ins1,ins2, threshold):
 # Exclude the instruments in the exclusion_instrument_list from the given intervals
 # input: a list of intervals, and a list of instruments by digits to exclude
 # output: a list of intervals after exclusion
-def excludeCommonIntervalsForMulti(intervals, ex_ins_list, threshold):
+def excludeCommonIntervalsForMulti(dataframe, intervals, ex_ins_list, threshold):
     for ins in ex_ins_list:
-        ex_intervals = intervalsListByDigitOuter(ins)
+        ex_intervals = intervalsListByDigitOuter(dataframe, ins)
         intervals = excludeCommonIntervals(intervals,ex_intervals, threshold)
     return intervals
 
@@ -148,14 +148,22 @@ def polyphonyForInstrument(dataframe, instrument, threshold):
         # find intervals for all possible combinations
         dictionary = {}
         for comb in combs:
-            pre_intervals = findCommonIntervalsForMulti(comb, threshold)
+            pre_intervals = findCommonIntervalsForMulti(dataframe, comb, threshold)
             ex_instruments = list(set(all_instruments) - set(comb))
-            pre_intervals = excludeCommonIntervalsForMulti(pre_intervals, ex_instruments, threshold)
+            pre_intervals = excludeCommonIntervalsForMulti(dataframe, pre_intervals, ex_instruments, threshold)
             dictionary[comb] = pre_intervals
         
         return dictionary
 
 # Test --------------------------------------------------------------------------------------------------------------------------
+
+import pandas as pd
+
+guojige = pd.read_csv("textgrid/国际歌.csv")
+instrument_dic = {'Guqin':0,'Zhongruan':1,'Guzheng': 2,'Xiao':3,'Zhudi':4,'Pipa':5,'Erhu':6}
+guojige['tier'].replace(instrument_dic, inplace=True)
+
+
 def test_inclusion():
     a1 = [[1,3],[5,7],[9,40]]
     b1 = [[2,6],[9,15],[37,40]]
@@ -166,23 +174,23 @@ def test_inclusion():
     
 def test_exclusion():
     t = 2
-    a1 = intervalsListByNameInter('Guzheng')
-    b1 = intervalsListByNameOuter('Pipa')
+    a1 = intervalsListByNameInter(guojige, 'Guzheng')
+    b1 = intervalsListByNameOuter(guojige, 'Pipa')
     r1 = [[107, 157], [210,259]]
-    a2 = intervalsListByNameInter('Pipa')
-    b2 = intervalsListByNameOuter('Guzheng')
+    a2 = intervalsListByNameInter(guojige, 'Pipa')
+    b2 = intervalsListByNameOuter(guojige, 'Guzheng')
     r2 = []
-    a3 = intervalsListByNameInter('Guqin')
-    b3 = intervalsListByNameOuter('Pipa')
+    a3 = intervalsListByNameInter(guojige, 'Guqin')
+    b3 = intervalsListByNameOuter(guojige, 'Pipa')
     r3 = [[132,157],[207,259]]
-    a4 = intervalsListByNameInter('Pipa')
-    b4 = intervalsListByNameOuter('Guqin')
+    a4 = intervalsListByNameInter(guojige, 'Pipa')
+    b4 = intervalsListByNameOuter(guojige, 'Guqin')
     r4 = []
-    a5 = intervalsListByNameInter('Guzheng')
-    b5 = intervalsListByNameOuter('Guqin')
+    a5 = intervalsListByNameInter(guojige, 'Guzheng')
+    b5 = intervalsListByNameOuter(guojige, 'Guqin')
     r5 = [[107,131]]
-    a6 = intervalsListByNameInter('Guqin')
-    b6 = intervalsListByNameOuter('Guzheng')
+    a6 = intervalsListByNameInter(guojige, 'Guqin')
+    b6 = intervalsListByNameOuter(guojige, 'Guzheng')
     r6 = [[207,209]]
     
     assert (excludeCommonIntervals(a1,b1,t) == r1)
@@ -196,19 +204,19 @@ def test_exclusion():
     
 def test_exclusion_multi():
     t = 2
-    a1 = findCommonIntervalsForMulti([2,0],2)
+    a1 = findCommonIntervalsForMulti(guojige,[2,0],2)
     b1 = [4]
     r1 = [[210,234]]
-    a2 = findCommonIntervalsForMulti([2,0],2)
+    a2 = findCommonIntervalsForMulti(guojige,[2,0],2)
     b2 = [4,5]
     r2 = [[210,234]]
-    a3 = findCommonIntervalsForMulti([2,0],2)
+    a3 = findCommonIntervalsForMulti(guojige,[2,0],2)
     b3 = [5]
     r3 = [[132,157],[210,259]]
     
-    assert excludeCommonIntervalsForMulti(a1,b1,t) == r1
-    assert excludeCommonIntervalsForMulti(a2,b2,t) == r2
-    assert excludeCommonIntervalsForMulti(a3,b3,t) == r3
+    assert excludeCommonIntervalsForMulti(guojige,a1,b1,t) == r1
+    assert excludeCommonIntervalsForMulti(guojige,a2,b2,t) == r2
+    assert excludeCommonIntervalsForMulti(guojige,a3,b3,t) == r3
     
     return True
 
