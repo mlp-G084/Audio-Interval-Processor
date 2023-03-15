@@ -77,8 +77,6 @@ def findCommonIntervalsForMulti(dataframe, instrument_list, threshold):
         i = i + 1
     return result
 
-findCommonIntervalsForMulti([2,0,5],2)
-
 # Exclusion --------------------------------------------------------------------------------------------------------------------------
 
 # Exclude ins2 from in1
