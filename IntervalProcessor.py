@@ -171,12 +171,6 @@ def polyphonyForInstrument(dataframe, instrument, threshold):
         dictionary['length'] = length
         return dictionary
 
-def polyphonyByInstrument(file, instrument, threshold):
-    f = pd.read_csv(file)
-    f['tier'].replace(instrument_dic, inplace=True)
-    dataframe = f
-    return polyphonyForInstrument(dataframe,instrument,threshold)
-
 # Test --------------------------------------------------------------------------------------------------------------------------
 
 import pandas as pd
@@ -271,6 +265,14 @@ import os
 
 instrument_dic = {'Guqin':0,'Zhongruan':1,'Guzheng': 2,'Xiao':3,'Zhudi':4,'Pipa':5,'Erhu':6, 'Xun':-1}
 
+# Function 1 to be used
+def polyphonyByInstrument(file, instrument, threshold):
+    f = pd.read_csv(file)
+    f['tier'].replace(instrument_dic, inplace=True)
+    dataframe = f
+    return polyphonyForInstrument(dataframe,instrument,threshold)
+
+# Function 2 to be used
 def total_count(threshold):
     # Obtain all the files
     files = os.listdir("csv/")
@@ -298,8 +300,10 @@ def total_count(threshold):
 
     return length_dictionary
 
+
+
 # print(total_count(1))
-print(polyphonyByInstrument('csv/guojige.csv','Guzheng',0))
+print(polyphonyByInstrument('csv/国际歌.csv','Guzheng',0))
 
 # Addition notes:
 # 0.try to take more tests to ensure the functions work properly
