@@ -146,6 +146,7 @@ from itertools import combinations
 #   2. the last key is 'length' with value as the total number of seconds for the instrument
 def polyphonyForInstrument(dataframe, instrument, threshold):
     all_instruments = allInstrumentsInDigit(dataframe)
+    print(all_instruments)
     if not (findInstrumentDigit(instrument) in all_instruments):
         print("Instrument not exist in this sound track.")
 
@@ -169,6 +170,12 @@ def polyphonyForInstrument(dataframe, instrument, threshold):
 
         dictionary['length'] = length
         return dictionary
+
+def polyphonyByInstrument(file, instrument, threshold):
+    f = pd.read_csv(file)
+    f['tier'].replace(instrument_dic, inplace=True)
+    dataframe = f
+    return polyphonyForInstrument(dataframe,instrument,threshold)
 
 # Test --------------------------------------------------------------------------------------------------------------------------
 
@@ -287,11 +294,12 @@ def total_count(threshold):
         print(instruments)
         for instrument in instruments:
             length_dictionary[instrument] += polyphonyForInstrument(csv,instrument,threshold)['length']
+            print(polyphonyForInstrument(csv,instrument,threshold))
 
     return length_dictionary
 
-print(total_count(2))
-
+# print(total_count(1))
+print(polyphonyByInstrument('csv/guojige.csv','Guzheng',0))
 
 # Addition notes:
 # 0.try to take more tests to ensure the functions work properly
