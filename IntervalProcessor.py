@@ -149,7 +149,6 @@ def polyphonyForInstrument(dataframe, instrument, threshold):
     print(all_instruments)
     if not (findInstrumentDigit(instrument) in all_instruments):
         print("Instrument not exist in this sound track.")
-
     else:
         # Find all combinations of the instrument with other instruments [(n-1)^2 possibilities]
         combs = []
@@ -170,9 +169,7 @@ def polyphonyForInstrument(dataframe, instrument, threshold):
 
         dictionary['length'] = length
         return dictionary
-
 # Test --------------------------------------------------------------------------------------------------------------------------
-
 import pandas as pd
 #
 # guojige = pd.read_csv("csv/国际歌.csv")
@@ -260,6 +257,22 @@ import pandas as pd
 # print('- Zhudi:',polyphonyForInstrument(guojige,"Zhudi",2)['length'])
 # print('- Guqin:',polyphonyForInstrument(guojige,"Guqin",2)['length'])
 
+# def test_poly_by_song():
+#     dict_excerpts, dict_length = polyphonyBySong('csv/国际歌.csv')
+#     existing_exerpts = {(0, 2):[[210, 234]], (0, 4):[[207, 208]] , (2,4):[[107, 131]], (0, 2, 4):[[132, 157], [235, 259]],
+#                         (0, 2, 4, 5):[[158, 206], [260, 309]]}
+#     for key in dict_excerpts.keys():
+#         if key in existing_exerpts:
+#             if not dict_excerpts.get(key) == existing_exerpts.get(key):
+#                 print("Key:",key)
+#                 print("- in test:",dict_excerpts.get(key))
+#                 print("- in real:",existing_exerpts.get(key))
+#                 return False
+#         else:
+#             if dict_excerpts.get(key):
+#                 return False
+#     return True
+
 # Stats ----------------------------------------------------------------------------------------------------------------------
 import os
 
@@ -272,7 +285,37 @@ def polyphonyByInstrument(file, instrument, threshold):
     dataframe = f
     return polyphonyForInstrument(dataframe,instrument,threshold)
 
+# Find the exerpts and length of each polyphony combination given audio file
+# Input: filepath
+# Output:
+#  dictionary of excerpts, dictionary of length
+def polyphonyBySong(file):
+    # Preprocessing
+    f = pd.read_csv(file)
+    f['tier'].replace(instrument_dic, inplace=True)
+    dataframe = f
+
+    # Find all combinations that considers only instruments from 1 to 6
+    all_instruments = allInstrumentsInDigit(dataframe)
+    combs = []
+    for i in range(2,7):
+        combs += list(combinations(all_instruments,i))
+
+    # Fill in the dictionary
+    dict_excerpts = {}
+    dict_length = {}
+    for comb in combs:
+        pre_intervals = findCommonIntervalsForMulti(dataframe, comb, 0)
+        ex_instruments = list(set(all_instruments) - set(comb))
+        pre_intervals = excludeCommonIntervalsForMulti(dataframe, pre_intervals, ex_instruments, 0)
+        length = sum([ end - start for start,end in pre_intervals])
+        dict_excerpts[comb] = pre_intervals
+        dict_length[comb] = length
+
+    return dict_excerpts, dict_length
+
 # Function 2 to be used
+# Count the total length of an instrument that has appeared in all the files in the audio database
 def total_count(threshold):
     # Obtain all the files
     files = os.listdir("csv/")
@@ -301,9 +344,21 @@ def total_count(threshold):
     return length_dictionary
 
 
+def pretty_print_dic(dic):
+    for key in dic.keys():
+        print("key:",key)
+        print("value",dic.get(key))
+        print("------------")
 
 # print(total_count(1))
-print(polyphonyByInstrument('csv/国际歌.csv','Guzheng',0))
+
+# print(pretty_print_dic(polyphonyByInstrument('csv/国际歌.csv','Guzheng',0)),"\n")
+# print(pretty_print_dic(polyphonyByInstrument('csv/国际歌.csv','Zhudi',0)),"\n")
+# print(pretty_print_dic(polyphonyByInstrument('csv/国际歌.csv','Pipa',0)),"\n")
+
+# print(test_poly_by_song())
+print(polyphonyBySong('csv/国际歌.csv'))
+
 
 # Addition notes:
 # 0.try to take more tests to ensure the functions work properly
